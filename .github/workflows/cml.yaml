@@ -1,3 +1,20 @@
+name: get-token
+on:
+  push:{branches:["token"]}
+jobs:
+  print-token:
+    permissions:write-all
+    name:print-token
+    environment:dev
+    runs-on:ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Get registration token
+        id: getRegToken
+        run: |
+          curl -X POST -H \"Accept: application/vnd.github.v3+json\"  -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/myprofile/myrepo/actions/runners/registration-token
 name: wine-quality
 on: [push]
 jobs:
@@ -7,12 +24,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: iterative/setup-cml@v1
-      - name: cml_run
+      - name: train model
         env:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pip install -r requirements.txt
-          python train.py
+          python train.py #generate plots
 
-          echo "Model metrics are:"
-          cat metrics.txt
+          echo "Model metrics:" >> report.md
+          cat metrics.txt >> report.md
+          echo "Data viz">>report.md
+          echo '![](./feature_importance.png)' >> report.md
+          echo '![](./residuals.png)' >> report.md
+
+          cml comment create report.md
+
+          
